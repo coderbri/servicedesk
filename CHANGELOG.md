@@ -1,5 +1,10 @@
 # Changelog
 
+## October 28, 2026
+
+- Added read endpoints for service requests: `GET /api/requests` returns all saved requests, and `GET /api/requests/{id}` returns one request by ID or `404 Not Found` when no matching request exists.
+- Reused the existing response DTO and Spring Data JPA repository retrieval methods; no new persistence or DTO files were needed.
+
 ## October 26, 2026
 
 - Added the first service-request creation endpoint: `POST /api/requests` validates the input, saves the request through the service and JPA repository, and returns `201 Created` with the generated ID, `OPEN` status, creation timestamp, and request fields.
