@@ -6,13 +6,15 @@ import com.coderbri.servicedesk.repository.ServiceRequestRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.coderbri.servicedesk.entity.RequestStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 /**
  * @file: service/ServiceRequestService.java
- * @description: Application service that creates service requests and delegates
- * persistence to the repository.
+ * @description: Application service that creates, retrieves, and updates service
+ * requests, enforcing valid status transitions and delegating persistence to the repository.
  */
 @Service
 public class ServiceRequestService {
@@ -48,4 +50,46 @@ public class ServiceRequestService {
                         "Service request not found: " + id
                 ));
     }
+
+    /** Updates a request, returning 404 when absent and 400 for an invalid status transition. */
+    @Transactional
+    public ServiceRequest updateRequest(
+            Long id,
+            String title,
+            String description,
+            RequestPriority priority,
+            RequestStatus status) {
+
+        ServiceRequest request = getRequestById(id);
+
+        if (!isValidStatusTransition(request.getStatus(), status)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid status transition from "
+                            + request.getStatus() + " to " + status
+            );
+        }
+
+        request.update(title, description, priority, status);
+
+        return repository.save(request);
+    }
+
+    /** Checks whether the requested status follows the service-request lifecycle. */
+    private boolean isValidStatusTransition(
+            RequestStatus current,
+            RequestStatus next) {
+
+        if (current == next) {
+            return true;
+        }
+
+        return switch (current) {
+            case OPEN -> next == RequestStatus.IN_PROGRESS;
+            case IN_PROGRESS -> next == RequestStatus.RESOLVED;
+            case RESOLVED -> next == RequestStatus.CLOSED;
+            case CLOSED -> false;
+        };
+    }
+
 }

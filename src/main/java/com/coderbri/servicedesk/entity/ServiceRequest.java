@@ -60,6 +60,7 @@ public class ServiceRequest {
         this.status = RequestStatus.OPEN;
     }
 
+    /** Sets default status and creation time before the entity is first persisted. */
     @PrePersist
     protected void onCreate() {
         if (status == null) {
@@ -69,6 +70,19 @@ public class ServiceRequest {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
+    }
+
+    /** Replaces the editable fields while retaining the request ID and creation time. */
+    public void update(
+            String title,
+            String description,
+            RequestPriority priority,
+            RequestStatus status) {
+
+        this.title = title;
+        this.description = description;
+        this.priority = priority;
+        this.status = status;
     }
 
     public Long getId() {

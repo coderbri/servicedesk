@@ -2,6 +2,7 @@ package com.coderbri.servicedesk.controller;
 
 import com.coderbri.servicedesk.dto.CreateServiceRequestRequest;
 import com.coderbri.servicedesk.dto.ServiceRequestResponse;
+import com.coderbri.servicedesk.dto.UpdateServiceRequestRequest;
 import com.coderbri.servicedesk.entity.ServiceRequest;
 import com.coderbri.servicedesk.service.ServiceRequestService;
 import jakarta.validation.Valid;
@@ -13,8 +14,8 @@ import java.util.List;
 
 /**
  * @file: controller/ServiceRequestController.java
- * @description: REST controller for the /api/requests endpoint; validates create
- * requests, calls the service, and returns the saved request with HTTP 201.
+ * @description: REST controller for the /api/requests endpoint; validates request
+ * payloads, delegates create, read, and update operations, and returns their responses.
  */
 @RestController
 @RequestMapping("/api/requests")
@@ -62,5 +63,24 @@ public class ServiceRequestController {
         ServiceRequest request = service.getRequestById(id);
 
         return ResponseEntity.ok(new ServiceRequestResponse(request));
+    }
+
+    /** Updates a saved request by ID and returns its updated representation. */
+    @PutMapping("/{id}")
+    public ResponseEntity<ServiceRequestResponse> updateRequest(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateServiceRequestRequest request) {
+
+        ServiceRequest updatedRequest = service.updateRequest(
+                id,
+                request.getTitle(),
+                request.getDescription(),
+                request.getPriority(),
+                request.getStatus()
+        );
+
+        return ResponseEntity.ok(
+                new ServiceRequestResponse(updatedRequest)
+        );
     }
 }

@@ -30,7 +30,14 @@ The Gradle process did not have the correct `DB_PASSWORD` in its environment. En
    set +a
    ```
 
-3. Re-run the Gradle build or tests from that same terminal session.
+3. From that same terminal session, verify production compilation and tests:
+
+   ```bash
+   ./gradlew compileJava
+   ./gradlew test
+   ```
+
+   For a full clean build, you can run `./gradlew clean build`; this also compiles and runs the tests. These commands inherit `DB_PASSWORD` from the current shell. The presence check above confirms it is set without displaying the credential.
 
 ### Key takeaway
 

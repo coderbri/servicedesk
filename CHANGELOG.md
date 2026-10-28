@@ -2,6 +2,7 @@
 
 ## October 28, 2026
 
+- Added `PUT /api/requests/{id}` to update a saved service request, validating request fields and allowing only the defined status transitions `OPEN` → `IN_PROGRESS` → `RESOLVED` → `CLOSED`; invalid transitions return `400 Bad Request`, and an unknown request ID returns `404 Not Found`.
 - Added read endpoints for service requests: `GET /api/requests` returns all saved requests, and `GET /api/requests/{id}` returns one request by ID or `404 Not Found` when no matching request exists.
 - Reused the existing response DTO and Spring Data JPA repository retrieval methods; no new persistence or DTO files were needed.
 
