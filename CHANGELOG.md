@@ -1,5 +1,11 @@
 # Changelog
 
+## October 29, 2026
+
+- Added service-layer unit tests with JUnit and Mockito for create, read, update, missing-record handling, valid status transitions, and invalid status transitions.
+- Added controller tests with MockMvc for POST, GET, GET-by-ID, and PUT behavior, including response status and JSON checks and blank-title validation.
+- Investigated the full-context `ServicedeskApplicationTests` failure and identified it as an Oracle/JDBC metadata connection issue. `ServiceRequestServiceTest` and `ServiceRequestControllerTest` each passed when run independently; after applying the existing documented `DB_PASSWORD` setup, the complete `./gradlew test` suite passed.
+
 ## October 28, 2026
 
 - Added `PUT /api/requests/{id}` to update a saved service request, validating request fields and allowing only the defined status transitions `OPEN` → `IN_PROGRESS` → `RESOLVED` → `CLOSED`; invalid transitions return `400 Bad Request`, and an unknown request ID returns `404 Not Found`.
