@@ -1,5 +1,11 @@
 # Changelog
 
+## November 3, 2026
+
+- Expanded the README with the project's capabilities, technology and architecture overview, API summary, and local run and verification instructions. Added the API reference in `docs/07-api-reference.md` and the setup and reproducibility guide in `docs/SETUP.md`.
+- Added the GitHub Actions CI workflow in `.github/workflows/ci.yml`, using the pinned `ubuntu-24.04` runner, updated checkout and Java setup actions, and Java 21 with Gradle. It runs the isolated service and controller tests on pushes and pull requests to `main`, or manually; the Oracle-dependent `ServicedeskApplicationTests` full application-context test is not run by this workflow.
+- Added `docs/08-github-actions-ci-and-authentication.md` with CI workflow guidance and GitHub push-authentication setup and troubleshooting. This documents Git authentication; it does not add authentication to the ServiceDesk application.
+
 ## October 29, 2026
 
 - Added service-layer unit tests with JUnit and Mockito for create, read, update, missing-record handling, valid status transitions, and invalid status transitions.
