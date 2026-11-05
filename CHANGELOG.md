@@ -1,5 +1,11 @@
 # Changelog
 
+## November 5, 2026
+
+- Reorganized the current project guides into a numbered reading path covering portfolio scope, setup, database and tests, API reference, and Oracle/Postman troubleshooting. Merged the standalone Java compilation and Gradle verification guide into the database and tests guide.
+- Moved the implementation walkthrough, test learning notes, full-suite troubleshooting history, and GitHub Actions/Git authentication learning notes into `docs/notes/` with descriptive filenames.
+- Replaced the aspirational `MVP-PRD.md` with `01-MVP-SCOPE-BACKEND.md`, which describes the implemented portfolio API and distinguishes it from possible future features.
+
 ## November 3, 2026
 
 - Expanded the README with the project's capabilities, technology and architecture overview, API summary, and local run and verification instructions. Added the API reference in `docs/07-api-reference.md` and the setup and reproducibility guide in `docs/SETUP.md`.

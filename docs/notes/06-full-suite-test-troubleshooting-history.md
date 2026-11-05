@@ -27,7 +27,7 @@ The two Phase 5 test classes were run independently with these commands, and bot
 ./gradlew test --tests "com.coderbri.servicedesk.controller.ServiceRequestControllerTest"
 ```
 
-After confirming `DB_PASSWORD` was set using the method already documented in [01-oracle-connection-and-gradle-tests.md](01-oracle-connection-and-gradle-tests.md), the full suite was run again and passed:
+After confirming `DB_PASSWORD` was set using the method documented in [Database and tests](../03-DATABASE-AND-TESTS.md), the full suite was run again and passed:
 
 ```bash
 ./gradlew test
@@ -37,7 +37,7 @@ After confirming `DB_PASSWORD` was set using the method already documented in [0
 
 1. Read the failing test class name in the Gradle output. A failure in `ServicedeskApplicationTests` occurs during full-context startup; it is separate from the isolated Phase 5 tests.
 2. Run `ServiceRequestServiceTest` and `ServiceRequestControllerTest` individually to check those layers on their own.
-3. If the full-context test reports missing JDBC metadata or an undetermined dialect, check the Oracle connection and the terminal's `DB_PASSWORD` environment using the existing instructions in [01-oracle-connection-and-gradle-tests.md](01-oracle-connection-and-gradle-tests.md).
+3. If the full-context test reports missing JDBC metadata or an undetermined dialect, check the Oracle connection and the terminal's `DB_PASSWORD` environment using the existing instructions in [Database and tests](../03-DATABASE-AND-TESTS.md).
 4. Once the database environment is available, rerun `./gradlew test` to verify the complete suite.
 
 ## Key takeaway

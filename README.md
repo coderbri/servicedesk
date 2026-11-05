@@ -1,118 +1,67 @@
 # ServiceDesk
 
-ServiceDesk is a Java REST API for recording and tracking service requests. It demonstrates a small support workflow: create a request, retrieve requests, and update request details and lifecycle status while storing records in Oracle Database Free.
+ServiceDesk is a Java REST API that demonstrates a small service-request workflow. It creates and retrieves requests, validates updates, and enforces a controlled lifecycle while persisting records in Oracle Database Free.
 
-## Current capabilities
+## What it demonstrates
 
-- Create a service request with a title, description, and priority.
-- Retrieve all requests or one request by ID.
-- Update a request's title, description, priority, and status.
-- Validate required fields and maximum lengths.
-- Enforce the status progression `OPEN` → `IN_PROGRESS` → `RESOLVED` → `CLOSED`; a request may remain in its current status, and unsupported transitions are rejected.
-- Return HTTP errors for invalid input or status transitions (`400 Bad Request`) and missing request IDs (`404 Not Found`).
+- A layered Spring Boot application with controller, DTO, service, repository, and entity responsibilities.
+- REST endpoints for creating, listing, retrieving, and updating requests.
+- Bean Validation for required fields and maximum lengths, plus enum-based priority and status values.
+- A status lifecycle that allows a request to remain in its current status or advance one step: `OPEN` → `IN_PROGRESS` → `RESOLVED` → `CLOSED`.
+- Service tests with Mockito and HTTP-level controller tests with MockMvc.
 
-Supported priorities are `LOW`, `MEDIUM`, and `HIGH`. New requests start with `OPEN` status and receive an ID and creation timestamp when persisted.
+Invalid input or status transitions return `400 Bad Request`; a request ID that does not exist returns `404 Not Found`. New requests begin in `OPEN` status. The full scope and explicit non-goals are in [01-MVP-SCOPE-BACKEND.md](docs/01-MVP-SCOPE-BACKEND.md).
 
 ## Technology
 
-- Java 21
-- Spring Boot 4.1.1
-- Gradle 9.8.2 (Gradle Wrapper)
-- Oracle Database Free and Oracle JDBC driver
-- Spring Data JPA
-- Jakarta Bean Validation
-- JUnit, Mockito, and MockMvc for automated tests
+Java 21 · Spring Boot 4.1.1 · Gradle 9.8.2 · Spring MVC · Spring Data JPA · Jakarta Bean Validation · Oracle Database Free · JUnit · Mockito · MockMvc
 
-## Architecture
+## API
 
-The application uses a layered structure under `com.coderbri.servicedesk`:
+All routes use `/api/requests`. See the [API reference](docs/04-API-REFERENCE.md) for request bodies, response examples, validation rules, and cURL commands.
 
-| Package | Responsibility |
-| --- | --- |
-| `controller` | Maps HTTP routes, validates incoming DTOs, and returns HTTP responses. |
-| `dto` | Defines create/update request payloads and the response representation. |
-| `service` | Coordinates request operations and enforces status transition rules. |
-| `repository` | Uses Spring Data JPA to persist and retrieve entities. |
-| `entity` | Defines the persisted `ServiceRequest` model and priority/status enums. |
-
-Requests flow from the controller through the DTO and service layers to the repository and Oracle database. Responses are mapped from entities to a response DTO.
-
-## API overview
-
-The API is served under `/api/requests` on the default local port `8080`.
-
-| Method | Endpoint | Behavior | Success response |
+| Method | Endpoint | Purpose | Success |
 | --- | --- | --- | --- |
-| `POST` | `/api/requests` | Create a request | `201 Created` with a request response |
-| `GET` | `/api/requests` | Retrieve all requests | `200 OK` with an array |
-| `GET` | `/api/requests/{id}` | Retrieve one request | `200 OK`; `404 Not Found` if absent |
-| `PUT` | `/api/requests/{id}` | Replace editable request fields | `200 OK`; `404 Not Found` if absent; `400 Bad Request` for invalid status transitions or validation |
+| `POST` | `/api/requests` | Create a request | `201 Created` |
+| `GET` | `/api/requests` | List requests | `200 OK` |
+| `GET` | `/api/requests/{id}` | Retrieve one request | `200 OK` |
+| `PUT` | `/api/requests/{id}` | Update request fields and status | `200 OK` |
 
-Create request:
+## Run and test
 
-```json
-{
-  "title": "Laptop Wi-Fi issue",
-  "description": "Cannot connect to the office network.",
-  "priority": "HIGH"
-}
-```
+Start with the [setup guide](docs/02-SETUP.md). Compiling the application and running the isolated service/controller tests do not require Oracle. Running the API or full local test suite requires Oracle Database Free and the `DB_PASSWORD` environment variable.
 
-Example response shape (the ID and timestamp are generated and vary):
+GitHub Actions runs the isolated service and controller test classes. Its green result does not cover the Oracle-dependent full-context test or verify Oracle persistence. The database requirements and test commands are detailed in [Database and tests](docs/03-DATABASE-AND-TESTS.md).
 
-```json
-{
-  "id": 1,
-  "title": "Laptop Wi-Fi issue",
-  "description": "Cannot connect to the office network.",
-  "status": "OPEN",
-  "priority": "HIGH",
-  "createdAt": "2026-10-26T17:16:25.571153"
-}
-```
-
-An update request supplies all editable fields, including the requested status:
-
-```json
-{
-  "title": "Laptop Wi-Fi issue",
-  "description": "Cannot connect to the office network.",
-  "priority": "HIGH",
-  "status": "IN_PROGRESS"
-}
-```
-
-## Prerequisites
-
-- Java 21.
-- Oracle Database Free available locally with the `FREEPDB1` service on `localhost:1521` and the application database user configured.
-- `DB_PASSWORD` available in the environment of the terminal that runs the application or tests.
-
-See [Oracle connection and Gradle test setup](docs/01-oracle-connection-and-gradle-tests.md) for database and `DB_PASSWORD` instructions. The `.env` file is not loaded automatically; keep credentials local and do not commit them.
-
-## Run and verify
-
-From the project root, make sure Oracle is running and `DB_PASSWORD` is available, then start the API:
+Once Oracle is configured and `DB_PASSWORD` is available in the current terminal, start the API with:
 
 ```bash
 ./gradlew bootRun
 ```
 
-The API is available at `http://localhost:8080`. There is no frontend; interact with the REST endpoints using an API client such as Postman or `curl`.
+The API listens at `http://localhost:8080`. Use Postman or another API client to try the endpoints. The [Oracle quota and Postman guide](docs/05-ORACLE-QUOTA-AND-POSTMAN.md) includes a manual database-backed check.
 
-Compile and run the automated tests with:
+## Project boundaries
 
-```bash
-./gradlew compileJava
-./gradlew test
-```
+This is a backend portfolio demonstration. It has no frontend, application authentication or authorization, delete endpoint, deployment configuration, or Oracle persistence integration test in CI. Do not expose it publicly with real user data.
 
-The full test suite includes a Spring application-context test that uses the configured Oracle connection. The service and controller tests use mocked dependencies and do not verify Oracle persistence. See [test verification notes](docs/03-verify-java-compilation-and-tests.md) and [service request test notes](docs/05-understanding-service-request-tests.md) for details.
+## Documentation
 
-For request fields, response shapes, status codes, validation rules, status transitions, and cURL examples, see the [ServiceDesk API reference](docs/07-api-reference.md).
+| File | Purpose |
+| --- | --- |
+| [01-MVP-SCOPE-BACKEND.md](docs/01-MVP-SCOPE-BACKEND.md) | Portfolio demo scope and non-goals. |
+| [02-SETUP.md](docs/02-SETUP.md) | Clone instructions, prerequisites, and setup paths. |
+| [03-DATABASE-AND-TESTS.md](docs/03-DATABASE-AND-TESTS.md) | Oracle configuration, `DB_PASSWORD`, and test choices. |
+| [04-API-REFERENCE.md](docs/04-API-REFERENCE.md) | Implemented API contract and endpoint examples. |
+| [05-ORACLE-QUOTA-AND-POSTMAN.md](docs/05-ORACLE-QUOTA-AND-POSTMAN.md) | Oracle quota troubleshooting and manual Postman verification. |
+| [`docs/notes/`](docs/notes/) | Learning notes and historical troubleshooting. |
+| [CHANGELOG.md](CHANGELOG.md) | Chronological project history. |
 
-## Project status and scope
+`HELP.md` contains optional generic Spring Boot references.
 
-The current project is a backend API focused on service-request create, read, and update workflows. It has no delete endpoint, authentication, frontend, or deployment configuration. The service and controller tests cover application behavior with mocks; they are not a dedicated Oracle integration-test suite. The root path `/` has no page or route.
+Learning notes:
 
-For milestone history, see [CHANGELOG.md](CHANGELOG.md). Additional implementation and troubleshooting notes are in [`docs/`](docs/).
+- [02-create-request-implementation-walkthrough.md](docs/notes/02-create-request-implementation-walkthrough.md) explains request creation and the responsibilities of each application layer.
+- [05-automated-test-learning-notes.md](docs/notes/05-automated-test-learning-notes.md) explains how the service and controller tests are set up and what they cover.
+- [06-full-suite-test-troubleshooting-history.md](docs/notes/06-full-suite-test-troubleshooting-history.md) records past full-suite troubleshooting and verification.
+- [08-github-actions-ci-and-authentication-notes.md](docs/notes/08-github-actions-ci-and-authentication-notes.md) covers CI learning and GitHub push authentication; it does not describe application authentication.

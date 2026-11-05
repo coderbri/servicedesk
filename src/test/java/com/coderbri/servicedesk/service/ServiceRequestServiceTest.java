@@ -7,6 +7,9 @@ import com.coderbri.servicedesk.entity.ServiceRequest;
 import com.coderbri.servicedesk.repository.ServiceRequestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -14,6 +17,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -187,6 +193,96 @@ class ServiceRequestServiceTest {
         assertEquals(400, exception.getStatusCode().value());
 
         // Verify that a rejected update is never saved.
+        verify(repository, never()).save(any(ServiceRequest.class));
+    }
+
+    @ParameterizedTest(name = "{0} may transition to {1}")
+    @MethodSource("validStatusTransitions")
+    void updateRequest_withAllowedTransition_savesRequest(
+            RequestStatus currentStatus,
+            RequestStatus nextStatus) {
+
+        Long id = 1L;
+        ServiceRequest request = new ServiceRequest(
+                "Laptop issue", "Laptop won't connect.", RequestPriority.HIGH);
+        request.update(
+                request.getTitle(), request.getDescription(),
+                request.getPriority(), currentStatus);
+
+        when(repository.findById(id)).thenReturn(Optional.of(request));
+        when(repository.save(any(ServiceRequest.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ServiceRequest result = service.updateRequest(
+                id, "Laptop issue", "Laptop won't connect.",
+                RequestPriority.HIGH, nextStatus);
+
+        assertEquals(nextStatus, result.getStatus());
+        verify(repository).save(request);
+    }
+
+    static Stream<Arguments> validStatusTransitions() {
+        return Stream.of(
+                arguments(RequestStatus.OPEN, RequestStatus.OPEN),
+                arguments(RequestStatus.OPEN, RequestStatus.IN_PROGRESS),
+                arguments(RequestStatus.IN_PROGRESS, RequestStatus.IN_PROGRESS),
+                arguments(RequestStatus.IN_PROGRESS, RequestStatus.RESOLVED),
+                arguments(RequestStatus.RESOLVED, RequestStatus.RESOLVED),
+                arguments(RequestStatus.RESOLVED, RequestStatus.CLOSED),
+                arguments(RequestStatus.CLOSED, RequestStatus.CLOSED)
+        );
+    }
+
+    @ParameterizedTest(name = "{0} may not transition to {1}")
+    @MethodSource("invalidStatusTransitions")
+    void updateRequest_withDisallowedTransition_doesNotSave(
+            RequestStatus currentStatus,
+            RequestStatus nextStatus) {
+
+        Long id = 1L;
+        ServiceRequest request = new ServiceRequest(
+                "Laptop issue", "Laptop won't connect.", RequestPriority.HIGH);
+        request.update(
+                request.getTitle(), request.getDescription(),
+                request.getPriority(), currentStatus);
+        when(repository.findById(id)).thenReturn(Optional.of(request));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.updateRequest(
+                        id, "Laptop issue", "Laptop won't connect.",
+                        RequestPriority.HIGH, nextStatus));
+
+        assertEquals(400, exception.getStatusCode().value());
+        assertEquals(currentStatus, request.getStatus());
+        verify(repository, never()).save(any(ServiceRequest.class));
+    }
+
+    static Stream<Arguments> invalidStatusTransitions() {
+        return Stream.of(
+                arguments(RequestStatus.OPEN, RequestStatus.RESOLVED),
+                arguments(RequestStatus.OPEN, RequestStatus.CLOSED),
+                arguments(RequestStatus.IN_PROGRESS, RequestStatus.OPEN),
+                arguments(RequestStatus.IN_PROGRESS, RequestStatus.CLOSED),
+                arguments(RequestStatus.RESOLVED, RequestStatus.OPEN),
+                arguments(RequestStatus.RESOLVED, RequestStatus.IN_PROGRESS),
+                arguments(RequestStatus.CLOSED, RequestStatus.OPEN),
+                arguments(RequestStatus.CLOSED, RequestStatus.IN_PROGRESS),
+                arguments(RequestStatus.CLOSED, RequestStatus.RESOLVED)
+        );
+    }
+
+    @Test
+    void updateRequest_whenRequestDoesNotExist_throwsNotFoundWithoutSaving() {
+        when(repository.findById(999L)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.updateRequest(
+                        999L, "Laptop issue", "Laptop won't connect.",
+                        RequestPriority.HIGH, RequestStatus.IN_PROGRESS));
+
+        assertEquals(404, exception.getStatusCode().value());
         verify(repository, never()).save(any(ServiceRequest.class));
     }
 }

@@ -6,7 +6,7 @@ This guide records how the ServiceDesk continuous-integration workflow is set up
 
 Continuous integration (CI) asks GitHub to check out a commit on a temporary machine and run a repeatable build or test command. A passing run shows that the selected checks passed for that commit. It does not prove that checks you did not run passed.
 
-The ServiceDesk workflow is [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). It runs when a commit is pushed to `main`, when a pull request targets `main`, or when a user starts it manually from the Actions page.
+The ServiceDesk workflow is [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml). It runs when a commit is pushed to `main`, when a pull request targets `main`, or when a user starts it manually from the Actions page.
 
 ## A common workflow shape
 
@@ -34,14 +34,22 @@ jobs:
       # Add a step to run its build and selected tests.
 ```
 
-The shared pattern is `name` → `on` → `jobs` → runner and `steps`. The parts after checkout depend on the project. For this repository, the concrete version is [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): it sets up Java 21, uses the Gradle wrapper, and filters test execution to the isolated service and controller tests. A Node.js, Python, or other Java project would keep the general structure but use its own runtime setup and checks.
+The shared pattern is `name` → `on` → `jobs` → runner and `steps`. The parts after checkout depend on the project. For this repository, the concrete version is [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml): it sets up Java 21, uses the Gradle wrapper, and filters test execution to the isolated service and controller tests. A Node.js, Python, or other Java project would keep the general structure but use its own runtime setup and checks.
 
-The first CI workflow deliberately runs only these tests:
+The current CI workflow deliberately runs only these tests:
 
 - `com.coderbri.servicedesk.service.ServiceRequestServiceTest`
 - `com.coderbri.servicedesk.controller.ServiceRequestControllerTest`
 
 They use mocks and do not need Oracle. `ServicedeskApplicationTests` starts the full Spring application context and currently needs Oracle. The workflow does not run that test or claim that the full suite passes. Gradle can compile other test source files while the `--tests` filters limit which tests execute.
+
+### Current coverage decision
+
+For now, CI stays database-free and runs the service and controller test classes with mocked dependencies. Adding Oracle to the workflow would mean provisioning and waiting for a database on every run, while the existing `ServicedeskApplicationTests` only checks that the application context loads; it does not exercise a real database write or read. That extra CI setup would not yet provide meaningful persistence coverage.
+
+A green workflow therefore confirms that Java and test code compile and that the selected service and controller tests pass. It does **not** confirm that the complete local test suite passes, that the application starts against Oracle, or that Oracle persistence works. Run `./gradlew test` locally after completing the database setup in [Database and tests](../03-DATABASE-AND-TESTS.md) when you want to check the Oracle-dependent context test.
+
+Revisit this decision when the project has a useful database integration test and a repeatable way to provision Oracle in CI. At that point, add a separate integration job so its database setup and results remain clear alongside the fast isolated checks.
 
 ## Workflow file concepts
 

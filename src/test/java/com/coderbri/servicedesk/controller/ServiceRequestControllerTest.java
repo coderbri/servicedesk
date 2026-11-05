@@ -8,6 +8,8 @@ import com.coderbri.servicedesk.entity.RequestStatus;
 import com.coderbri.servicedesk.entity.ServiceRequest;
 import com.coderbri.servicedesk.service.ServiceRequestService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -16,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -100,6 +103,37 @@ class ServiceRequestControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(service);
+    }
+
+    @ParameterizedTest(name = "POST rejects invalid request body {index}")
+    @MethodSource("invalidCreateRequests")
+    void createRequest_withInvalidFields_returnsBadRequest(String json) throws Exception {
+        mockMvc.perform(post("/api/requests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(service);
+    }
+
+    static Stream<String> invalidCreateRequests() {
+        return Stream.of(
+                """
+                    {"title":"Valid title","description":"   ","priority":"HIGH"}
+                    """,
+                """
+                    {"title":"%s","description":"Valid description","priority":"HIGH"}
+                    """.formatted("x".repeat(151)),
+                """
+                    {"title":"Valid title","description":"%s","priority":"HIGH"}
+                    """.formatted("x".repeat(2001)),
+                """
+                    {"title":"Valid title","description":"Valid description"}
+                    """,
+                """
+                    {"title":"Valid title","description":"Valid description","priority":"URGENT"}
+                    """
+        );
     }
 
     /* TEST 3: GET ALL RETURNS A JSON ARRAY */
@@ -200,6 +234,46 @@ class ServiceRequestControllerTest {
                 "Cannot connect to office network",
                 RequestPriority.HIGH,
                 RequestStatus.IN_PROGRESS);
+    }
+
+    @ParameterizedTest(name = "PUT rejects invalid request body {index}")
+    @MethodSource("invalidUpdateRequests")
+    void updateRequest_withInvalidFields_returnsBadRequest(String json) throws Exception {
+        mockMvc.perform(put("/api/requests/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(service);
+    }
+
+    static Stream<String> invalidUpdateRequests() {
+        return Stream.of(
+                """
+                    {"title":"  ","description":"Valid description","priority":"HIGH","status":"OPEN"}
+                    """,
+                """
+                    {"title":"Valid title","description":"  ","priority":"HIGH","status":"OPEN"}
+                    """,
+                """
+                    {"title":"%s","description":"Valid description","priority":"HIGH","status":"OPEN"}
+                    """.formatted("x".repeat(151)),
+                """
+                    {"title":"Valid title","description":"%s","priority":"HIGH","status":"OPEN"}
+                    """.formatted("x".repeat(2001)),
+                """
+                    {"title":"Valid title","description":"Valid description","status":"OPEN"}
+                    """,
+                """
+                    {"title":"Valid title","description":"Valid description","priority":"HIGH"}
+                    """,
+                """
+                    {"title":"Valid title","description":"Valid description","priority":"URGENT","status":"OPEN"}
+                    """,
+                """
+                    {"title":"Valid title","description":"Valid description","priority":"HIGH","status":"UNKNOWN"}
+                    """
+        );
     }
 
     /* HELPER METHOD: PREPARING TEST REQUESTS */

@@ -17,6 +17,8 @@ The service tests call the real `ServiceRequestService` and replace its reposito
 
 These service and controller tests do **not** verify real Oracle persistence. The repository is mocked in the service tests, and the controller test uses a mocked service with a web-focused Spring test setup. Database integration is a separate kind of test that exercises the actual database connection and persistence configuration.
 
+The manual endpoint walkthrough in [02-create-service-request-api.md](02-create-request-implementation-walkthrough.md) and the Oracle/Postman verification in [05-ORACLE-QUOTA-AND-POSTMAN.md](../05-ORACLE-QUOTA-AND-POSTMAN.md) serve a different purpose: they explain how a person can send requests and inspect results. The automated tests below preserve key input and lifecycle rules as repeatable checks, but they do not replace those hands-on instructions or prove database persistence.
+
 The project uses Spring Boot `4.1.1` and the feature-specific test starters in `build.gradle`: `spring-boot-starter-data-jpa-test`, `spring-boot-starter-validation-test`, and `spring-boot-starter-webmvc-test`. The controller imports `WebMvcTest` from `org.springframework.boot.webmvc.test.autoconfigure` and `MockitoBean` from `org.springframework.test.context.bean.override.mockito`, which are the packages used in this project.
 
 ## Service test: `ServiceRequestServiceTest.java`
@@ -91,6 +93,9 @@ Assertions check outcomes; Mockito verification checks whether a dependency was 
 | `getRequestById_whenRequestDoesNotExist_throwsNotFound` | Returns `Optional.empty()`; checks for a not-found exception with status 404 and verifies the lookup. |
 | `updateRequest_withValidTransition_updatesRequest` | Supplies an existing request; checks updated fields and status, and verifies lookup and save. |
 | `updateRequest_withInvalidTransition_throwsBadRequest` | Attempts an invalid `OPEN` to `CLOSED` transition; checks for status 400 and verifies no save occurred. |
+| `updateRequest_withAllowedTransition_savesRequest` | Parameterized checks that a request can stay in each status or advance exactly one lifecycle step. |
+| `updateRequest_withDisallowedTransition_doesNotSave` | Parameterized checks all backward, skipped, and out-of-`CLOSED` transitions return 400 without saving or changing the status. |
+| `updateRequest_whenRequestDoesNotExist_throwsNotFoundWithoutSaving` | Checks that updating a missing ID returns 404 and does not save. |
 
 Negative tests matter because they check how the code handles invalid or missing data, not only successful paths.
 
@@ -145,10 +150,12 @@ These checks verify what the API returns at the MVC boundary, including JSON ser
 | --- | --- |
 | `createRequest_returnsCreated` | Sends valid JSON; checks 201 and selected response fields, then verifies service arguments. |
 | `createRequest_withBlankTitle_returnsBadRequest` | Sends a blank title; checks 400 and no service interactions. |
+| `createRequest_withInvalidFields_returnsBadRequest` | Parameterized checks blank descriptions, overlong fields, missing priority, and an invalid priority value; each returns 400 before the service is called. |
 | `getAllRequests_returnsOkAndList` | Configures two service results; checks 200, array length, and both titles. |
 | `getRequestById_whenFound_returnsOk` | Configures a found request; checks 200 and selected JSON fields. |
 | `getRequestById_whenMissing_returnsNotFound` | Configures a not-found exception; checks the HTTP 404 response. |
 | `updateRequest_returnsOk` | Sends valid update JSON; checks 200 and updated response fields, then verifies service arguments. |
+| `updateRequest_withInvalidFields_returnsBadRequest` | Parameterized checks blank/overlong fields, missing priority or status, and invalid enum values; each returns 400 before the service is called. |
 
 ## The `createRequest()` helper and reflection caveat
 
