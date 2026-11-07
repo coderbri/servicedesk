@@ -1,15 +1,23 @@
 package com.coderbri.servicedesk.entity;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+
+import java.time.LocalDateTime;
+
 /**
  * @file: ServiceRequest.java
  * @description: JPA entity representing a service request stored in the database,
  * including its title, description, priority, status, generated ID, and creation time.
  */
-
-import jakarta.persistence.*;
-import jakarta.persistence.Table;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "service_requests")
@@ -18,7 +26,6 @@ import java.time.LocalDateTime;
         sequenceName = "service_requets_seq",
         allocationSize = 1
 )
-
 public class ServiceRequest {
 
     @Id

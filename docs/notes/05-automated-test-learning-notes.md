@@ -157,11 +157,9 @@ These checks verify what the API returns at the MVC boundary, including JSON ser
 | `updateRequest_returnsOk` | Sends valid update JSON; checks 200 and updated response fields, then verifies service arguments. |
 | `updateRequest_withInvalidFields_returnsBadRequest` | Parameterized checks blank/overlong fields, missing priority or status, and invalid enum values; each returns 400 before the service is called. |
 
-## The `createRequest()` helper and reflection caveat
+## The `createRequest()` helper
 
-The private `createRequest(...)` helper builds a `ServiceRequest` with predictable values for reuse across controller tests. The entity's ID, status, and creation time are persistence-managed fields, so the helper sets them to simulate an entity that has already been saved.
-
-It uses Java reflection (`getDeclaredField`, `setAccessible(true)`, and `Field.set`) to assign those fields directly. Reflection can access fields outside the usual public getter/setter path, which is why it works for fields without public setters. This couples the helper to the entity's private field names: renaming a field can break the helper. If a field cannot be found or set, the helper wraps that failure in `IllegalStateException` with a descriptive message. This helper prepares test data; it does not persist anything.
+The private `createRequest(...)` helper returns a Mockito mock of `ServiceRequest` with its getters configured. Controller tests need predictable values to verify response mapping; they do not need to create or persist a real entity. This keeps the helper independent of the entity's private fields and avoids simulating database-managed state with reflection.
 
 ## Key takeaway
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## November 6, 2026
+
+- Polished imports and removed redundant comments across the service, controller, entity, and test classes without changing application behavior.
+- Simplified controller-test fixtures to use a Mockito mock, and updated the test-learning notes to explain the approach.
+- Added a concise class description to `ServiceRequestServiceTest.java` covering its service logic and mocked repository.
+
 ## November 5, 2026
 
 - Reorganized the current project guides into a numbered reading path covering portfolio scope, setup, database and tests, API reference, and Oracle/Postman troubleshooting. Merged the standalone Java compilation and Gradle verification guide into the database and tests guide.

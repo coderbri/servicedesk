@@ -1,13 +1,13 @@
 package com.coderbri.servicedesk.service;
 
 import com.coderbri.servicedesk.entity.RequestPriority;
+import com.coderbri.servicedesk.entity.RequestStatus;
 import com.coderbri.servicedesk.entity.ServiceRequest;
 import com.coderbri.servicedesk.repository.ServiceRequestRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import com.coderbri.servicedesk.entity.RequestStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
